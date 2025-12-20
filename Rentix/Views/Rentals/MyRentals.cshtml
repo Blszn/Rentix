@@ -1,0 +1,76 @@
+﻿@model IEnumerable<Rentix.Models.Rental>
+@using Rentix.Models.Enums
+
+@{
+    ViewData["Title"] = "Kiralamalarım";
+}
+
+<div class="container py-5">
+    <h2 class="mb-4 fw-bold text-primary">Kiralamalarım</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-warning text-center">
+            Henüz bir araç kiralamadınız. <a asp-controller="Home" asp-action="Gallery" class="alert-link">Hemen bir araç seçin!</a>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                // Kart rengini duruma göre belirle (Aktif: Yeşil/Success, İptal: Kırmızı/Danger, Bitti: Gri/Secondary)
+                string borderClass = item.RentalStatus == RentalStatus.Active ? "border-success" :
+                (item.RentalStatus == RentalStatus.Cancelled ? "border-danger" : "border-secondary");
+
+                string badgeClass = item.RentalStatus == RentalStatus.Active ? "bg-success" :
+                (item.RentalStatus == RentalStatus.Cancelled ? "bg-danger" : "bg-secondary");
+
+                string statusText = item.RentalStatus == RentalStatus.Active ? "Aktif" :
+                (item.RentalStatus == RentalStatus.Cancelled ? "İptal Edildi" : "Tamamlandı");
+
+                <div class="col-md-6 mb-4">
+                    <div class="card @borderClass shadow-sm h-100" style="border-width: 2px;">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title fw-bold">@item.Vehicle.Brand @item.Vehicle.Model</h5>
+                                    <p class="text-muted small mb-0">@item.Vehicle.PlateNumber</p>
+                                </div>
+                                <span class="badge @badgeClass">@statusText</span>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Başlangıç</small>
+                                    <strong>@item.StartDate.ToString("dd.MM.yyyy")</strong>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <small class="text-muted d-block">Bitiş</small>
+                                    <strong>@item.EndDate.ToString("dd.MM.yyyy")</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                                <h4 class="text-primary fw-bold mb-0">@item.TotalPrice.ToString("C2")</h4>
+
+                                @if (item.RentalStatus == RentalStatus.Active)
+                                {
+                                    <form asp-action="CancelRental" asp-route-id="@item.Id" method="post" onsubmit="return confirm('Bu kiralamayı iptal etmek istediğinize emin misiniz?');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-x-circle"></i> İptal Et
+                                        </button>
+                                    </form>
+                                }
+                                else if (item.RentalStatus == RentalStatus.Cancelled)
+                                {
+                                    <span class="text-danger small"><i class="bi bi-info-circle"></i> İade edildi</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,108 @@
+﻿@model Rentix.Models.Vehicle
+@using Rentix.Models.Enums
+
+@{
+    ViewData["Title"] = "Araç Düzenle";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Araç Düzenle</h4>
+            </div>
+            <div class="card-body">
+                <form asp-action="Edit" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Brand" class="form-label">Marka</label>
+                            <input asp-for="Brand" class="form-control" />
+                            <span asp-validation-for="Brand" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Model" class="form-label">Model</label>
+                            <input asp-for="Model" class="form-control" />
+                            <span asp-validation-for="Model" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="PlateNumber" class="form-label">Plaka</label>
+                            <input asp-for="PlateNumber" class="form-control" />
+                            <span asp-validation-for="PlateNumber" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Year" class="form-label">Yıl</label>
+                            <input asp-for="Year" type="number" class="form-control" />
+                            <span asp-validation-for="Year" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="DailyPrice" class="form-label">Günlük Fiyat (₺)</label>
+                            <input asp-for="DailyPrice" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="DailyPrice" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label">Durum</label>
+                            <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<VehicleStatus>()"></select>
+                            <span asp-validation-for="Status" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <h5 class="mb-3 text-secondary"><i class="bi bi-images"></i> Araç Görselleri</h5>
+
+                    @if (Model.Images != null && Model.Images.Count > 0)
+                    {
+                        <p class="text-muted small">Silmek istediğiniz resimlerin yanındaki kutucuğu işaretleyin.</p>
+                        <div class="row g-3 mb-4">
+                            @foreach (var img in Model.Images)
+                            {
+                                <div class="col-4 col-sm-3 position-relative">
+                                    <div class="border rounded p-2 text-center bg-light">
+                                        <img src="@img.ImageUrl" class="img-fluid rounded mb-2" style="max-height: 100px; object-fit: cover;" />
+
+                                        <div class="form-check d-flex justify-content-center align-items-center gap-2">
+                                            <input class="form-check-input border-danger" type="checkbox" name="deleteImageIds" value="@img.Id" id="img-@img.Id" style="cursor: pointer;">
+                                            <label class="form-check-label text-danger fw-bold small" for="img-@img.Id">
+                                                SİL
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning small">Bu araca ait henüz bir resim yüklenmemiş.</div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Yeni Resim Ekle</label>
+                        <input type="file" name="newImgFiles" class="form-control" multiple accept="image/*" />
+                        <div class="form-text">Mevcut resimlere ekleme yapabilirsiniz. Birden fazla seçim için CTRL tuşunu kullanın.</div>
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a asp-action="Index" class="btn btn-secondary me-md-2">İptal</a>
+                        <button type="submit" class="btn btn-warning btn-lg"><i class="bi bi-save"></i> Değişiklikleri Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

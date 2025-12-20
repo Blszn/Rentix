@@ -1,0 +1,6 @@
+services:
+  rentix:
+    image: ${DOCKER_REGISTRY-}rentix
+    build:
+      context: .
+      dockerfile: Rentix/Dockerfile

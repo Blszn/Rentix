@@ -1,0 +1,26 @@
+﻿@using Rentix.Models
+@inject SignInManager<ApplicationUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+
+<div class="list-group shadow-sm">
+    <a class="list-group-item list-group-item-action py-3 @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">
+        <i class="bi bi-person-circle me-2"></i> Profil
+    </a>
+    <a class="list-group-item list-group-item-action py-3 @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">
+        <i class="bi bi-envelope me-2"></i> E-Posta
+    </a>
+    <a class="list-group-item list-group-item-action py-3 @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">
+        <i class="bi bi-key me-2"></i> Şifre Değiştir
+    </a>
+    @if (hasExternalLogins)
+    {
+        <a class="list-group-item list-group-item-action py-3 @ManageNavPages.ExternalLoginsNavClass(ViewContext)" id="external-login" asp-page="./ExternalLogins">
+            <i class="bi bi-google me-2"></i> Sosyal Hesaplar
+        </a>
+    }
+    <a class="list-group-item list-group-item-action py-3 @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">
+        <i class="bi bi-hdd-network me-2"></i> Kişisel Veriler
+    </a>
+</div>

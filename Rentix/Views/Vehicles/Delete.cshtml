@@ -1,0 +1,59 @@
+﻿@model Rentix.Models.Vehicle
+
+@{
+    ViewData["Title"] = "Araç Sil";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            @if (ViewBag.ErrorMessage != null)
+            {
+                <div class="alert alert-danger shadow-sm border-danger" role="alert">
+                    <h4 class="alert-heading"><i class="bi bi-exclamation-octagon-fill"></i> İşlem Başarısız!</h4>
+                    <p>@ViewBag.ErrorMessage</p>
+                    <hr>
+                    <p class="mb-0 small">Öneri: Bu aracı silmek yerine Düzenle sayfasından durumunu 'Bakımda' olarak değiştirebilirsiniz.</p>
+                </div>
+            }
+
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="bi bi-trash3-fill"></i> Silme Onayı</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title text-center mb-4 text-danger">Bu aracı kalıcı olarak silmek istediğinize emin misiniz?</h5>
+
+                    <div class="row mb-3 border-bottom pb-2">
+                        <div class="col-sm-4 fw-bold text-muted">Plaka</div>
+                        <div class="col-sm-8 fs-5">@Model.PlateNumber</div>
+                    </div>
+
+                    <div class="row mb-3 border-bottom pb-2">
+                        <div class="col-sm-4 fw-bold text-muted">Marka / Model</div>
+                        <div class="col-sm-8">@Model.Brand @Model.Model</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-sm-4 fw-bold text-muted">Model Yılı</div>
+                        <div class="col-sm-8">@Model.Year</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <form asp-action="Delete">
+                            <input type="hidden" asp-for="Id" />
+
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Vazgeç
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Evet, Aracı Sil
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

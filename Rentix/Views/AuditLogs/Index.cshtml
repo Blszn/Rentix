@@ -1,0 +1,53 @@
+﻿@model IEnumerable<Rentix.Models.AuditLog>
+
+@{
+    ViewData["Title"] = "Sistem Günlükleri";
+}
+
+<h3 class="mb-3 text-secondary">👮 Sistem Hareketleri</h3>
+
+<div class="table-responsive">
+    <table class="table table-sm table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Tarih</th>
+                <th>Kullanıcı</th>
+                <th>İşlem (Action)</th>
+                <th>Varlık (Entity)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model)
+            {
+                <tr>
+                    <td>@log.Date.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                    <td>
+                        @if (log.User != null)
+                        {
+                            <span class="badge bg-info text-dark">@log.User.Email</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Sistem / Anonim</span>
+                        }
+                    </td>
+                    <td>
+                        @if (log.Action == "Create" || log.Action == "Rent")
+                        {
+                            <span class="text-success fw-bold">@log.Action</span>
+                        }
+                        else if (log.Action == "Delete")
+                        {
+                            <span class="text-danger fw-bold">@log.Action</span>
+                        }
+                        else
+                        {
+                            <span class="text-primary fw-bold">@log.Action</span>
+                        }
+                    </td>
+                    <td>@log.EntityName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

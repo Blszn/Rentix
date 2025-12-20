@@ -1,0 +1,134 @@
+﻿@model IEnumerable<Rentix.Models.Rental>
+
+@{
+    ViewData["Title"] = "Yönetici Paneli";
+}
+
+<div class="container-fluid py-4">
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Toplam Araç</h6>
+                        <h2 class="mb-0 fw-bold">@ViewBag.TotalVehicles</h2>
+                    </div>
+                    <i class="bi bi-car-front-fill fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Şu An Kirada</h6>
+                        <h2 class="mb-0 fw-bold">@ViewBag.ActiveRentals</h2>
+                    </div>
+                    <i class="bi bi-key-fill fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark shadow-sm h-100">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75">Kayıtlı Üye</h6>
+                        <h2 class="mb-0 fw-bold">@ViewBag.TotalUsers</h2>
+                    </div>
+                    <i class="bi bi-people-fill fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-table"></i> Aktif Kiralama Takibi</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Müşteri (Kiralayan)</th>
+                            <th>Araç Bilgisi</th>
+                            <th>Plaka</th>
+                            <th>Kiralama Tarihleri</th>
+                            <th>Kalan Süre</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-emoji-smile fs-1 d-block mb-2"></i>
+                                    Şu anda kirada araç bulunmuyor. Tüm araçlar garajda.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in Model)
+                            {
+                                // Kalan günü hesapla
+                                var remainingDays = (item.EndDate - DateTime.Today).Days;
+                                var rowClass = remainingDays < 0 ? "table-danger" : (remainingDays <= 1 ? "table-warning" : "");
+
+                                <tr class="@rowClass">
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="bg-light rounded-circle p-2 me-2 text-primary">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <div>
+                                                <fw-bold class="d-block text-dark">@item.User?.Email</fw-bold>
+                                                <small class="text-muted">Müşteri ID: @item.User?.Id.Substring(0, 5)...</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">@item.Vehicle.Brand</span> @item.Vehicle.Model
+                                        <span class="badge bg-secondary ms-1">@item.Vehicle.Year</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-dark font-monospace border border-white">@item.Vehicle.PlateNumber</span>
+                                    </td>
+                                    <td>
+                                        <small class="d-block text-muted">Başlangıç: @item.StartDate.ToString("dd.MM.yyyy")</small>
+                                        <small class="fw-bold text-dark">Bitiş: @item.EndDate.ToString("dd.MM.yyyy")</small>
+                                    </td>
+                                    <td>
+                                        @if (remainingDays < 0)
+                                        {
+                                            <span class="text-danger fw-bold">Süre Geçmiş!</span>
+                                        }
+                                        else if (remainingDays == 0)
+                                        {
+
+                                            <span class="text-warning fw-bold">Bugün Son</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="text-success">@remainingDays Gün var</span>
+                                        }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <form asp-controller="Rentals" asp-action="Return" asp-route-id="@item.Id" method="post" class="d-inline" onsubmit="return confirm('Aracı teslim almak istiyor musunuz?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-box-arrow-in-down-left"></i> Teslim Al
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,174 @@
+﻿@page
+@model LoginModel
+
+@{
+    ViewData["Title"] = "Giriş Yap";
+    Layout = null; /* Kendi layout'umuzu kullanacağız, navbar görünmesin, odak sadece giriş olsun */
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rentix - Giriş Yap</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .login-container {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SOL TARAFTAKİ GÖRSEL ALANI */
+        .bg-image {
+            background-image: url('https://images.unsplash.com/photo-1485291571150-772bcfc10da5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Resmin üzerine hafif karartma */
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 40px;
+            color: white;
+        }
+
+        /* SAĞ TARAFTAKİ FORM ALANI */
+        .login-form-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background-color: white;
+        }
+
+        .login-wrapper {
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+        }
+
+        .form-floating > .form-control:focus ~ label {
+            color: #0d6efd;
+        }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        }
+
+        .btn-primary {
+            padding: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* MOBİL UYUM */
+        @@media (max-width: 991.98px) {
+            .bg-image {
+                display: none;
+            }
+            /* Mobilde resmi gizle */
+            .login-form-section {
+                background-color: #f8f9fa;
+            }
+
+            .login-wrapper {
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid login-container">
+        <div class="row h-100">
+
+            <div class="col-lg-7 p-0 d-none d-lg-block">
+                <div class="bg-image">
+                    <div class="bg-overlay">
+                        <h1 class="display-4 fw-bold">Yolculuk Başlasın.</h1>
+                        <p class="fs-4">Rentix ile hayalinizdeki araca bir tıkla ulaşın.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5 login-form-section">
+                <div class="login-wrapper">
+
+                    <div class="text-center mb-5">
+                        <a href="/" class="text-decoration-none">
+                            <h2 class="fw-bold text-primary mb-0">Rentix</h2>
+                        </a>
+                        <p class="text-muted mt-2">Devam etmek için giriş yapın</p>
+                    </div>
+
+                    <form id="account" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="name@example.com" />
+                            <label asp-for="Input.Email" class="text-muted"><i class="bi bi-envelope"></i> E-Posta Adresi</label>
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" placeholder="Şifre" />
+                            <label asp-for="Input.Password" class="text-muted"><i class="bi bi-lock"></i> Şifre</label>
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" asp-for="Input.RememberMe" />
+                                <label class="form-check-label text-muted small" asp-for="Input.RememberMe">
+                                    Beni Hatırla
+                                </label>
+                            </div>
+                            <a id="forgot-password" asp-page="./ForgotPassword" class="text-decoration-none small fw-bold">Şifremi Unuttum?</a>
+                        </div>
+
+                        <div class="d-grid mb-4">
+                            <button id="login-submit" type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm">Giriş Yap</button>
+                        </div>
+
+                        <div class="text-center border-top pt-4">
+                            <p class="text-muted small mb-2">Henüz hesabınız yok mu?</p>
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-dark w-100 rounded-pill">
+                                Hemen Kayıt Ol
+                            </a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>
