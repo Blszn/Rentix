@@ -134,9 +134,14 @@
                         </div>
 
                         <div class="form-floating mb-3">
-                            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" placeholder="Şifre" />
-                            <label asp-for="Input.Password" class="text-muted"><i class="bi bi-lock"></i> Şifre</label>
-                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                            <div class="input-group">
+                                <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" id="passwordInput" />
+
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                    <i id="toggleIcon" class="bi bi-eye"></i> Göster
+                                </button>
+                            </div>
+                            <span asp-validation-for="Input.Password" class="text-danger"></span>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -172,3 +177,19 @@
     <partial name="_ValidationScriptsPartial" />
 </body>
 </html>
+<script>
+    function togglePassword() {
+        var passwordField = document.getElementById("passwordInput");
+        var icon = document.getElementById("toggleIcon");
+
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            icon.classList.remove("bi-eye");
+            icon.classList.add("bi-eye-slash"); // Çizgili göz ikonu
+        } else {
+            passwordField.type = "password";
+            icon.classList.remove("bi-eye-slash");
+            icon.classList.add("bi-eye"); // Normal göz ikonu
+        }
+    }
+</script>

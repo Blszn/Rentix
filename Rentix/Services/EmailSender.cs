@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Configuration;
 using System.Net;
 using System.Net.Mail;
 
@@ -13,34 +14,39 @@ namespace Rentix.Services
             _configuration = configuration;
         }
 
-        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+        public Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            // appsettings.json dosyasından ayarları oku
-            var smtpServer = _configuration["EmailSettings:Server"];
-            var smtpPort = int.Parse(_configuration["EmailSettings:Port"] ?? "587");
-            var smtpUser = _configuration["EmailSettings:User"];
-            var smtpPass = _configuration["EmailSettings:Password"];
+            var mailHost = _configuration["EmailSettings:Host"];
 
-            // Eğer ayarlar boşsa (Henüz hostinge geçilmediyse) sahte işlem yap
-            // Bu sayede proje patlamaz, sadece konsola yazar.
-            if (string.IsNullOrEmpty(smtpServer) || string.IsNullOrEmpty(smtpUser))
+            // Eğer Port okunamazsa varsayılan 587 olsun
+            var portAyari = _configuration["EmailSettings:Port"];
+            var mailPort = string.IsNullOrEmpty(portAyari) ? 587 : int.Parse(portAyari);
+
+            var mailAdres = _configuration["EmailSettings:Mail"];
+            var mailSifre = _configuration["EmailSettings:Password"];
+            var gorunenAd = _configuration["EmailSettings:DisplayName"];
+
+            // Şifre boşsa hata fırlat (Debug için)
+            if (string.IsNullOrEmpty(mailSifre))
             {
-                System.Diagnostics.Debug.WriteLine($"[SAHTE EMAIL GÖNDERİMİ] Kime: {email}, Konu: {subject}");
-                System.Diagnostics.Debug.WriteLine($"İçerik: {htmlMessage}");
-                return; // Gerçek mail göndermeden çık
+                throw new Exception("Mail şifresi appsettings.json dosyasından okunamadı! Lütfen kontrol edin.");
             }
 
             try
             {
-                var client = new SmtpClient(smtpServer, smtpPort)
+                var client = new SmtpClient(mailHost, mailPort)
                 {
-                    Credentials = new NetworkCredential(smtpUser, smtpPass),
-                    EnableSsl = true // Genelde true olur
+                    // Bazı hostinglerde burası false, bazılarında true olmalı. 
+                    // Önce true dene, gitmezse false yapıp dene.
+                    EnableSsl = true,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(mailAdres, mailSifre),
+                    DeliveryMethod = SmtpDeliveryMethod.Network
                 };
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(smtpUser, "Rentix Destek"),
+                    From = new MailAddress(mailAdres, gorunenAd),
                     Subject = subject,
                     Body = htmlMessage,
                     IsBodyHtml = true
@@ -48,13 +54,12 @@ namespace Rentix.Services
 
                 mailMessage.To.Add(email);
 
-                await client.SendMailAsync(mailMessage);
+                return client.SendMailAsync(mailMessage);
             }
             catch (Exception ex)
             {
-                // Hata olursa loglayalım ama kullanıcıya çaktırmayalım (veya hata sayfasına yönlendirebilirsin)
-                System.Diagnostics.Debug.WriteLine($"Email Gönderme Hatası: {ex.Message}");
-                throw; // İstersen bu throw'u kaldırabilirsin, uygulama durmasın diye.
+                // Hatanın detayını görmek için
+                throw new InvalidOperationException($"E-posta gönderilemedi. Hata: {ex.Message} | Inner: {ex.InnerException?.Message}");
             }
         }
     }

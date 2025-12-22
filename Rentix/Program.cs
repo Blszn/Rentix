@@ -1,7 +1,10 @@
+using Rentix.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Rentix.Data;
-using Rentix.Models;
+using Rentix.Data;       // DÜZELTÝLDÝ: AKTES -> Rentix oldu
+using Rentix.Models;     // DÜZELTÝLDÝ: AKTES -> Rentix oldu
+using Rentix.Services;   // DÜZELTÝLDÝ: EmailSender'ý bulmasý için
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,58 +12,51 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// PostgreSQL Kullanýmý (UseNpgsql olmalý)
+// Veritabaný Servisi
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null);
+    }));
 
-// 2. Identity Ayarlarý (Rol Desteði Aktif)
+// 2. Identity (Üyelik) Ayarlarý
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    // Geliþtirme kolaylýðý için þifre kurallarýný gevþettik
+    // E-posta onayý AÇIK (True)
+    options.SignIn.RequireConfirmedAccount = true;
+
+    // Þifre Ayarlarý
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 3;
-    options.SignIn.RequireConfirmedAccount = false;
+
+    options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders()
 .AddDefaultUI();
 
+// 3. Email Servisi
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+// 4. MVC ve Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 var app = builder.Build();
 
-// 3. Admin Seed Ýþlemi (Otomatik Admin Oluþturma)
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        // DbSeeder sýnýfýnýn projenizde olduðundan emin olun
-        await DbSeeder.SeedRolesAndAdminAsync(services);
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Seed iþlemi sýrasýnda hata oluþtu.");
-    }
-}
-
-// HTTP Pipeline
+// 5. Pipeline Ayarlarý
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-using (var scope = app.Services.CreateScope())
-{
-    var dataContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    // Veritabanýný oluþtur ve bekleyen göçleri (migration) uygula
-    dataContext.Database.Migrate();
-}
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

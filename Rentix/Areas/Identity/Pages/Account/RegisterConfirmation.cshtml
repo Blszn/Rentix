@@ -1,23 +1,69 @@
 ﻿@page
 @model RegisterConfirmationModel
 @{
-    ViewData["Title"] = "Register confirmation";
+    ViewData["Title"] = "Kayıt Onayı";
 }
 
-<h1>@ViewData["Title"]</h1>
-@{
-    if (@Model.DisplayConfirmAccountLink)
-    {
-<p>
-    This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-    Normally this would be emailed: <a id="confirm-link" href="@Model.EmailConfirmationUrl">Click here to confirm your account</a>
-</p>
-    }
-    else
-    {
-<p>
-        Please check your email to confirm your account.
-</p>
-    }
-}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-primary text-white text-center py-4 border-0">
+                    <h3 class="fw-bold mb-0">
+                        <i class="bi bi-shield-check me-2"></i> Kayıt Başarılı!
+                    </h3>
+                </div>
 
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4 text-primary">
+                        <i class="bi bi-envelope-check-fill" style="font-size: 5rem;"></i>
+                    </div>
+
+                    <h2 class="h4 fw-bold mb-3 text-dark">E-posta Doğrulaması Gerekiyor</h2>
+
+                    <p class="text-muted mb-4 fs-5">
+                        Teşekkürler, hesabınız oluşturuldu. Güvenliğiniz için
+                        <strong>@Model.Email</strong> adresine bir doğrulama bağlantısı gönderdik.
+                    </p>
+
+                    <div class="alert alert-warning d-inline-block text-start mb-4 shadow-sm border-0 rounded-3">
+                        <div class="d-flex">
+                            <i class="bi bi-info-circle-fill fs-4 me-3 mt-1"></i>
+                            <div>
+                                <strong>Dikkat:</strong> E-posta kutunuzda gelen kutusunu göremiyorsanız, lütfen
+                                <u>Gereksiz (Spam)</u> veya <u>Tanıtımlar</u> klasörünü kontrol ediniz.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-3">
+                        <a href="/Identity/Account/Login" class="btn btn-outline-primary btn-lg px-4 rounded-pill">
+                            <i class="bi bi-box-arrow-in-right me-2"></i> Giriş Ekranına Dön
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light text-center py-3 border-0 text-muted small">
+                    <p class="mb-0">Mail ulaşmadı mı? <span class="text-primary fw-bold">Destek ile iletişime geçin.</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa; /* Hafif gri arka plan */
+    }
+    .bi-envelope-check-fill {
+        animation: float 3s ease-in-out infinite;
+        display: inline-block;
+    }
+
+    /* İkonun havada süzülme efekti */
+    @@keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+</style>

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
-using Rentix.Models; // ApplicationUser burada
+using Rentix.Models;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -17,17 +17,21 @@ namespace Rentix.Areas.Identity.Pages.Account
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserStore<ApplicationUser> _userStore;
         private readonly IEmailSender _emailSender;
+        // Loglama için logger ekliyoruz (Hata takibi için önemli)
+        private readonly ILogger<RegisterModel> _logger;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            ILogger<RegisterModel> logger)
         {
             _userManager = userManager;
             _userStore = userStore;
             _signInManager = signInManager;
             _emailSender = emailSender;
+            _logger = logger;
         }
 
         [BindProperty]
@@ -35,7 +39,6 @@ namespace Rentix.Areas.Identity.Pages.Account
 
         public string ReturnUrl { get; set; }
 
-        // Formdan gelecek veriler burada tanımlanır
         public class InputModel
         {
             [Required(ErrorMessage = "Ad alanı zorunludur.")]
@@ -74,32 +77,48 @@ namespace Rentix.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // YENİ KULLANICI OLUŞTURMA ANI
                 var user = new ApplicationUser
                 {
-                    UserName = Input.Email, // Giriş yaparken Email kullanılsın diye UserName'i Email yapıyoruz
+                    UserName = Input.Email,
                     Email = Input.Email,
-                    FirstName = Input.FirstName, // Yeni alan
-                    LastName = Input.LastName    // Yeni alan
+                    FirstName = Input.FirstName,
+                    LastName = Input.LastName
                 };
 
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
-                    // Kayıt başarılı, otomatik giriş yap
-                    await _signInManager.SignInAsync(user, isPersistent: false);
-                    return LocalRedirect(returnUrl);
+                    _logger.LogInformation("Kullanıcı yeni bir hesap oluşturdu.");
+
+                    // --- MAİL GÖNDERME KISMI BAŞLIYOR ---
+
+                    // 1. Token oluştur
+                    var userId = await _userManager.GetUserIdAsync(user);
+                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    // 2. Geri dönüş linkini hazırla (ConfirmEmail sayfasına gidecek)
+                    var callbackUrl = Url.Page(
+                        "/Account/ConfirmEmail",
+                        pageHandler: null,
+                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                        protocol: Request.Scheme);
+
+                    // 3. Maili gönder (EmailSender servisini kullanır)
+                    await _emailSender.SendEmailAsync(Input.Email, "Hesabınızı Doğrulayın",
+                        $"Lütfen hesabınızı doğrulamak için <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>buraya tıklayın</a>.");
+
+
+                    return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
                 }
 
-                // Hata varsa (örn: şifre basitse) ekrana bas
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
 
-            // Hata varsa sayfayı tekrar göster
             return Page();
         }
     }

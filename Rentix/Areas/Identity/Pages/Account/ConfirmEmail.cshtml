@@ -1,8 +1,117 @@
 ﻿@page
 @model ConfirmEmailModel
 @{
-    ViewData["Title"] = "Confirm email";
+    ViewData["Title"] = "E-posta Onayı";
+    // Başarılı mı kontrolü (StatusMessage içinde 'Error' yazmıyorsa başarılıdır)
+    bool isSuccess = Model.StatusMessage != null && !Model.StatusMessage.Contains("Hata");
 }
 
-<h1>@ViewData["Title"]</h1>
-<partial name="_StatusMessage" model="Model.StatusMessage" />
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center">
+
+                @if (isSuccess)
+                {
+                    /* --- BAŞARILI DURUM --- */
+                    <div class="card-header bg-success text-white py-4 border-0">
+                        <h3 class="fw-bold mb-0">
+                            <i class="bi bi-check-circle-fill me-2"></i> İşlem Başarılı
+                        </h3>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="mb-4 text-success icon-animate">
+                            <i class="bi bi-patch-check-fill" style="font-size: 5rem;"></i>
+                        </div>
+
+                        <h2 class="h4 fw-bold mb-3 text-dark">Hesabınız Doğrulandı!</h2>
+
+                        <p class="text-muted fs-5 mb-4">
+                            Artık AKTES sistemine tam erişim sağlayabilirsiniz.
+                        </p>
+
+                        <div class="alert alert-light border shadow-sm rounded-3">
+                            <span class="spinner-border spinner-border-sm text-success me-2" role="status"></span>
+                            <span id="countdownText" class="fw-bold text-success">3</span> saniye içinde giriş ekranına yönlendiriliyorsunuz...
+                        </div>
+
+                        <div class="mt-4">
+                            <a href="/Identity/Account/Login" class="btn btn-success px-4 rounded-pill">
+                                Beklemek İstemiyorum, Giriş Yap
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    /* --- HATA DURUMU --- */
+                    <div class="card-header bg-danger text-white py-4 border-0">
+                        <h3 class="fw-bold mb-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> Bir Sorun Oluştu
+                        </h3>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="mb-4 text-danger">
+                            <i class="bi bi-x-circle-fill" style="font-size: 5rem;"></i>
+                        </div>
+                        <h4 class="fw-bold text-dark">Doğrulama Başarısız</h4>
+                        <p class="text-muted">
+                            @Model.StatusMessage
+                        </p>
+                        <a href="/" class="btn btn-outline-danger mt-3">Ana Sayfaya Dön</a>
+                    </div>
+                }
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (isSuccess)
+{
+    <script>
+        // Sayfa yüklendiğinde çalışır
+        document.addEventListener("DOMContentLoaded", function() {
+            var seconds = 3; // Kaç saniye beklesin?
+            var countdownElement = document.getElementById("countdownText");
+
+            // Her saniye sayacı düşür
+            var interval = setInterval(function() {
+                seconds--;
+                if (countdownElement) {
+                    countdownElement.innerText = seconds;
+                }
+
+                // Süre bitince yönlendir
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    window.location.href = "/Identity/Account/Login";
+                }
+            }, 1000);
+        });
+    </script>
+}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    /* Başarı İkonu Animasyonu (Pop-up efekti) */
+    .icon-animate i {
+        display: inline-block;
+        animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @@keyframes popIn {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+</style>

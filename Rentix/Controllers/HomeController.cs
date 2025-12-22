@@ -1,12 +1,12 @@
-using Microsoft.AspNetCore.Authorization;
+Ôªøusing Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Rentix.Data;
+using Rentix.Models; // Rental sƒ±nƒ±fƒ± i√ßin
 using Rentix.Models.Enums;
 
 namespace Rentix.Controllers
 {
-    // Not: Class seviyesinde [Authorize] YOK. Herkes girebilir.
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -18,7 +18,6 @@ namespace Rentix.Controllers
 
         public IActionResult Index()
         {
-            // Admin ise panele, deilse vitrine
             if (User.IsInRole("Admin"))
             {
                 return RedirectToAction("Index", "Admin");
@@ -26,11 +25,9 @@ namespace Rentix.Controllers
             return View();
         }
 
-        // GALER›: T¸m araÁlar˝ veya arama sonuÁlar˝n˝ listeler
         [HttpGet]
         public async Task<IActionResult> Gallery()
         {
-            // Sadece stat¸s¸ 'Available' (M¸sait) olanlar˝ getir
             var vehicles = await _context.Vehicles
                 .Include(v => v.Images)
                 .Where(v => v.Status == VehicleStatus.Available)
@@ -39,46 +36,96 @@ namespace Rentix.Controllers
             return View(vehicles);
         }
 
-        // ARAMA ›ﬁLEM› (YEN› EKLENEN KISIM)
-        // Ana sayfadaki form buraya tarihleri gˆnderir
+        // --- G√úNCELLENMƒ∞≈û HATA YAKALAYICILI ARAMA METODU ---
         [HttpGet]
-        public async Task<IActionResult> Search(DateTime startDate, DateTime endDate, string location)
+        public async Task<IActionResult> Search(DateTime? startDate, DateTime? endDate, string location)
         {
-            // Basit tarih kontrol¸
-            if (startDate < DateTime.Today) startDate = DateTime.Today;
-            if (endDate <= startDate) endDate = startDate.AddDays(1);
-
-            // Veritaban˝ndaki T‹M araÁlar˝ Áek (ˆnce filtrelemeden)
-            var allVehicles = await _context.Vehicles
-                .Include(v => v.Images)
-                .Include(v => v.Rentals) // Kiralama geÁmi˛ini kontrol edeceiz
-                .ToListAsync();
-
-            // L›STE F›LTRELEME:
-            // "SeÁilen tarihlerde, aktif bir kiralamas˝yla Áak˝˛an araÁlar˝ EL›YORUZ"
-            var availableVehicles = allVehicles.Where(vehicle =>
+            try
             {
-                // 1. AraÁ genel olarak serviste veya pasifse gˆsterme
-                if (vehicle.Status != VehicleStatus.Available && vehicle.Status != VehicleStatus.Rented)
-                    return false;
+                // 1. TARƒ∞H KONTROL√ú (Null gelirse varsayƒ±lan ata)
+                var start = startDate ?? DateTime.Today;
+                var end = endDate ?? start.AddDays(1);
 
-                // 2. «ak˝˛ma Kontrol¸:
-                // Bu arac˝n aktif kiralamalar˝ndan herhangi biri, seÁilen tarih aral˝˝yla Áak˝˛˝yor mu?
-                bool isBooked = vehicle.Rentals.Any(r =>
-                    r.RentalStatus == RentalStatus.Active && // Sadece aktif kiralamalar
-                    (startDate < r.EndDate && r.StartDate < endDate) // Tarih Áak˝˛ma form¸l¸
-                );
+                if (start < DateTime.Today) start = DateTime.Today;
+                if (end <= start) end = start.AddDays(1);
 
-                // Eer Áak˝˛ma YOKSA (isBooked == false) bu arac˝ listeye ekle
-                return !isBooked;
-            }).ToList();
+                // 2. VERƒ∞TABANI KONTROL√ú
+                if (_context.Vehicles == null)
+                {
+                    throw new Exception("Veritabanƒ± baƒülantƒ±sƒ± ba≈üarƒ±lƒ± ancak 'Vehicles' tablosu NULL d√∂n√ºyor.");
+                }
 
-            // Kullan˝c˝ya bilgi vermek iÁin tarihleri View'a ta˛˝yal˝m
-            ViewBag.SearchStart = startDate;
-            ViewBag.SearchEnd = endDate;
+                // 3. VERƒ∞LERƒ∞ √áEKME (Include ile ili≈ükileri doldur)
+                var allVehicles = await _context.Vehicles
+                    .Include(v => v.Images)
+                    .Include(v => v.Rentals)
+                    .ToListAsync();
 
-            // Filtrelenmi˛ listeyi Gallery sayfas˝na gˆnder
-            return View("Gallery", availableVehicles);
+                // 4. Fƒ∞LTRELEME MANTIƒûI (Defensive Coding - Hata √ñnleyici)
+                var availableVehicles = allVehicles.Where(vehicle =>
+                {
+                    // Ara√ß bozuksa veya bakƒ±mda ise g√∂sterme
+                    if (vehicle.Status != VehicleStatus.Available && vehicle.Status != VehicleStatus.Rented)
+                        return false;
+
+                    // Kiralama listesi NULL gelirse bo≈ü liste kabul et (Patlamayƒ± √∂nler)
+                    var rentals = vehicle.Rentals ?? new List<Rental>();
+
+                    // √áakƒ±≈üma Kontrol√º
+                    bool isBooked = rentals.Any(r =>
+                        r.RentalStatus == RentalStatus.Active && // Sadece aktif kiralamalar
+                        (start < r.EndDate && r.StartDate < end) // Tarih √áakƒ±≈üma Form√ºl√º
+                    );
+
+                    // Eƒüer rezerve deƒüilse (!isBooked) listeye ekle
+                    return !isBooked;
+                }).ToList();
+
+                // View'a tarihleri g√∂nder
+                ViewBag.SearchStart = start;
+                ViewBag.SearchEnd = end;
+
+                // Sonu√ßlarƒ± Gallery sayfasƒ±na bas
+                return View("Gallery", availableVehicles);
+            }
+            catch (Exception ex)
+            {
+                // --- HATA EKRANI OLU≈ûTURMA (HTML) ---
+                // Mobilde dosya inmemesi i√ßin ContentType 'text/html' yapƒ±ldƒ±.
+
+                string errorHtml = $@"
+                <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1'>
+                    <title>Hata Raporu</title>
+                    <style>
+                        body {{ background-color: #121212; color: #e0e0e0; font-family: 'Consolas', 'Monaco', monospace; padding: 20px; }}
+                        h1 {{ color: #ff5252; border-bottom: 2px solid #ff5252; padding-bottom: 10px; }}
+                        .box {{ background: #1e1e1e; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #333; overflow-x: auto; }}
+                        .label {{ color: #82b1ff; font-weight: bold; margin-bottom: 5px; display: block; }}
+                        .msg {{ color: #fff; }}
+                        .stack {{ color: #69f0ae; font-size: 13px; }}
+                    </style>
+                </head>
+                <body>
+                    <h1>‚ö†Ô∏è Sƒ∞STEM HATASI (DEBUG)</h1>
+                    
+                    <span class='label'>HATA MESAJI:</span>
+                    <div class='box msg'>{ex.Message}</div>
+
+                    <span class='label'>NEREDE OLDU (StackTrace):</span>
+                    <div class='box stack'><pre>{ex.StackTrace}</pre></div>
+
+                    <span class='label'>DETAY (Inner Exception):</span>
+                    <div class='box msg'>{(ex.InnerException != null ? ex.InnerException.Message : "Yok")}</div>
+                    
+                    <p style='color: #888;'>* Bu ekran sadece hatayƒ± bulmak i√ßindir. Hata √ß√∂z√ºld√ºƒü√ºnde bu kod kaldƒ±rƒ±lmalƒ±dƒ±r.</p>
+                </body>
+                </html>";
+
+                return Content(errorHtml, "text/html");
+            }
         }
     }
 }
